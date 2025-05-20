@@ -11,7 +11,7 @@ st.title('Previsão')
 
 
 # dataset original (aquele usado no treinamento)
-df_treino = pd.read_csv("https://github.com/nascimentorafael1/techfase4/raw/refs/heads/main/data/train_prophet.csv")
+df_treino = pd.read_csv("data/train_prophet.csv")
 
 df_treino = df_treino.tail(160)
 df_treino = df_treino[['ds','y']]
@@ -20,9 +20,9 @@ df_treino['yhat_lower'] = np.nan
 df_treino['yhat_upper'] = np.nan
 
 
-df_ipea_brent = pd.read_csv("https://github.com/nascimentorafael1/techfase4/raw/refs/heads/main/data/df_ipea_brent.csv")
+df_ipea_brent = pd.read_csv("data/df_ipea_brent.csv")
 
-df_eia_prod_mundial = pd.read_csv("https://github.com/nascimentorafael1/techfase4/raw/refs/heads/main/data/df_eia_prod_mundial.csv")
+df_eia_prod_mundial = pd.read_csv("data/df_eia_prod_mundial.csv")
 
 # Carregar modelo Prophet
 def carregar_modelo():
@@ -78,12 +78,10 @@ if periodos > 0:
     df_modelo_prever = df_modelo_prever.head(periodos)
     
     
-
     # Fazer previsão
     forecast = modelo.predict(df_modelo_prever)
 
- 
-    
+     
     # Separando as colunas que irão para o gráfico
     previsao = forecast[['ds','yhat','yhat_lower','yhat_upper']]
     
