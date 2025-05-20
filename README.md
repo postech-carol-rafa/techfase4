@@ -18,3 +18,9 @@ Alunos:
 
 * Caroline Yuri Noguti - RM 358779
 * Rafael Nascimento Coutinho – RM 358930
+
+---
+
+tech4_ipynb -> Notebook com a análise inicial, seleção do modelo de machine learning e tratamento dos dados
+
+Demais arquivos são para a aplicação do streamlit no endereço: https://techfase4-petroleo-brent.streamlit.app/
