@@ -1,28 +1,22 @@
 # Importando bibiotecas
 import streamlit as st
-import requests
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 from statsmodels.tsa.seasonal import seasonal_decompose
+from datetime import datetime
 
 
-#Carregando DataFrame
-
-df_ipea_brent = pd.read_csv("data/df_ipea_brent.csv")
+# Carregando DataFrame IPEA - Brent
 df_ipea_brent = pd.read_csv("data/df_ipea_brent.csv")
 df_ipea_brent['data'] = pd.to_datetime(df_ipea_brent['data'], format="%Y-%m-%d")
 df_ipea_brent['valor'] = pd.Series(df_ipea_brent['valor'], dtype='Float64')
 df_ipea_brent = df_ipea_brent.set_index('data')
 df_ipea_brent = df_ipea_brent.sort_index()
 
-#DataFrame de eventos
 
-from datetime import datetime
-import pandas as pd
-
-# Lista de eventos históricos sem a coluna 'figura'
+# Dicionário com os eventos no histórico do preço Brent
 dados_eventos_novos = [
     {
         "data": datetime(1990, 9, 27),
@@ -81,16 +75,13 @@ dados_eventos_novos = [
     }
 ]
 
-
-
-
-# Criação do DataFrame
+## Transformando dicionário em data frame com o histórico de eventos do preço do petróleo Brent
 df_eventos_novos = pd.DataFrame(dados_eventos_novos)
 df_eventos_novos.set_index("data", inplace=True)
 
 
 
-# Array e DataFrames filtrados
+#Array e DataFrames filtrados para aplicação para seleção de anos e controles. Por exemplo: Filtros da aplicação.
 anos = df_ipea_brent['ano'].unique()
 precos_anuais = [df_ipea_brent[df_ipea_brent['ano'] == ano]['valor'].mean().round(2) for ano in anos]
 df_grouped = df_ipea_brent.groupby('ano')['valor'].mean().reset_index() # Agrupar por ano e calcular a média
@@ -98,15 +89,15 @@ df_grouped['diferenca'] = ((df_grouped['valor'] / df_grouped['valor'].shift(1)) 
 df_grouped = df_grouped.drop(df_grouped.index[0])
 
 
-#Funções
+# Funções
 
 def plot_preco_brent(df, ano_inicial, ano_final, df_eventos=None, range_y=None):
-    # Filtra o DataFrame principal pela data
+    ## Filtra o DataFrame principal pela data
     df_filtrado = df[(df['ano'] >= ano_inicial) & (df['ano'] <= ano_final)]
 
     fig = go.Figure()
 
-    # Linha principal do preço
+    ## Linha principal do preço
     fig.add_trace(go.Scatter(
         x=df_filtrado.index,
         y=df_filtrado['valor'],
@@ -123,7 +114,7 @@ def plot_preco_brent(df, ano_inicial, ano_final, df_eventos=None, range_y=None):
         )       
     ))
 
-    # Adiciona anotações, se df_eventos for fornecido
+    ## Adiciona anotações, se df_eventos for fornecido
     if df_eventos is not None:
         df_eventos_filtrado = df_eventos[(df_eventos.index.year >= ano_inicial) & (df_eventos.index.year <= ano_final)]
 
@@ -147,7 +138,7 @@ def plot_preco_brent(df, ano_inicial, ano_final, df_eventos=None, range_y=None):
                 align='center'
             )
 
-    # Configurações do layout
+    ## Configurações do layout
     layout_config = dict(
         title=f'Preço do Petróleo Brent no período de {ano_inicial} até {ano_final}',
         xaxis_title='Ano',
@@ -171,13 +162,13 @@ def plot_preco_brent(df, ano_inicial, ano_final, df_eventos=None, range_y=None):
 
 
 def plot_preco_brent_anual(df_anual, ano_ini, ano_fim):
-    # Filtrar o DataFrame
+    ## Filtrar o DataFrame
     df_ano = df_anual[(df_anual['ano'] >= ano_ini) & (df_anual['ano'] <= ano_fim)].copy()
 
-    # Criar o gráfico de barras
+    ## Criar o gráfico de barras
     fig = go.Figure()
 
-    # Adicionar as barras
+    ## Adicionar as barras
     fig.add_trace(go.Bar(
         x=df_ano['ano'],
         y=df_ano['valor'],
@@ -189,7 +180,7 @@ def plot_preco_brent_anual(df_anual, ano_ini, ano_fim):
         hoverinfo='skip'
     ))
 
-    # Adicionar anotações com a variação percentual (coloridas)
+    ## Adicionar anotações com a variação percentual (coloridas)
     for i, row in df_ano.iterrows():
         if pd.notna(row['diferenca']):
             cor = 'lightcoral' if row['diferenca'] < 0 else 'lightskyblue'
@@ -202,7 +193,7 @@ def plot_preco_brent_anual(df_anual, ano_ini, ano_fim):
                 font=dict(size=11)
             )
 
-    # Layout
+    ## Layout
     fig.update_layout(
         title=f'Preço Médio Anual do Petróleo Brent de {ano_ini} até {ano_fim}',
         font=dict(color='white'),
@@ -220,13 +211,13 @@ def plot_preco_brent_anual(df_anual, ano_ini, ano_fim):
 
 
 def plot_var_brent(df, ano_inicial, ano_final):
-    # Filtra o DataFrame pelo intervalo de anos
+    ## Filtra o DataFrame pelo intervalo de anos
     df_filtrado = df[(df['ano'] >= ano_inicial) & (df['ano'] <= ano_final)]
 
-    # Criação da figura
+    ## Criação da figura
     fig = go.Figure()
 
-    # Linha da variação percentual
+    ## Linha da variação percentual
     fig.add_trace(go.Scatter(
         x=df_filtrado.index,
         y=df_filtrado['p_variacao'],
@@ -235,7 +226,7 @@ def plot_var_brent(df, ano_inicial, ano_final):
         line=dict(color='#71C5E8', width=2),
     ))
 
-    # Configurações do layout
+    ## Configurações do layout
     fig.update_layout(
         title=f'Variação Percentual do Preço do Petróleo Brent de {ano_inicial} até {ano_final}',
         xaxis_title='Data',
@@ -246,8 +237,56 @@ def plot_var_brent(df, ano_inicial, ano_final):
             dtick='M12'
         ),
         yaxis=dict(
-        tickformat='.0%',  # Formatar como percentual com 2 casas decimais
+        tickformat='.0%',  ## Formatar como percentual com 2 casas decimais
     )
+    )
+
+    ## Exibe no Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def plot_brent_vs_mmbpd(df_brent, df_mmbpd, ano_inicio1, ano_fim2):
+    # Filtra os DataFrames pelo intervalo de anos desejado
+    df_brent_filtrado = df_brent[(df_brent['ano'] >= ano_inicio1) & (df_brent['ano'] <= ano_fim2)]
+    df_mmbpd_filtrado = df_mmbpd[(df_mmbpd['ano'] >= ano_inicio1) & (df_mmbpd['ano'] <= ano_fim2)]
+
+    # Cria a figura
+    fig = go.Figure()
+
+    # Linha do preço do Brent (azul escuro)
+    fig.add_trace(go.Scatter(
+        x=df_brent_filtrado.index,
+        y=df_brent_filtrado['valor'],
+        mode='lines',
+        name='Preço Brent (USD)',
+        line=dict(color='#0d3b66', width=3),
+        yaxis='y2'
+    ))
+
+    # Barras da produção de petróleo (azul claro)
+    fig.add_trace(go.Scatter(
+        x=df_mmbpd_filtrado.index,
+        y=df_mmbpd_filtrado['valor_mensal'],
+        mode='lines',
+        name='Produção de Petróleo (MMBPD)',
+        marker_color='#71C5E8',
+        yaxis='y1'
+    ))
+
+    # Layout com dois eixos Y
+    fig.update_layout(
+        title=f'Produção de Petróleo (MMBPD) vs Preço Brent (USD) — {ano_inicio1} a {ano_fim2}',
+        xaxis_title='Ano',
+        yaxis=dict(title='Produção (MMBPD)', side='left', showgrid=False),
+        yaxis2=dict(title='Preço Brent (USD)', overlaying='y', side='right'),
+        template='plotly_dark',
+        legend=dict(
+    orientation='h',
+    yanchor='top',
+    y=-0.2,
+    xanchor='center',
+    x=0.5
+)
     )
 
     # Exibe no Streamlit
@@ -255,14 +294,14 @@ def plot_var_brent(df, ano_inicial, ano_final):
 
 
 
-######
+# Início do corpo da página
 
 st.title('Storytelling')
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📈 Visão Geral", "💡 Insight - Eventos", "📅 Análise Temporal", "↗️ Variações","🛢️ Produção","✅ Conclusão"])
 
 with tab1:
    st.write('Abaixo apresentamos a variação do preço brent ao longo dos anos, é possível filtrar o período e passar o mouse na linha do tempo para visualizar os valores')
-   st.empty() # Cria um espaço em branco
+   st.empty() 
 
    # Filtrando ano
    ano_ini, ano_fim = st.slider(
@@ -787,52 +826,6 @@ with tab5:
  df_prod_petroleo_soma2.set_index('data', inplace=True)
  df_prod_petroleo_soma2.sort_index(ascending=True, inplace=True)
  
- def plot_brent_vs_mmbpd(df_brent, df_mmbpd, ano_inicio1, ano_fim2):
-    # Filtra os DataFrames pelo intervalo de anos desejado
-    df_brent_filtrado = df_brent[(df_brent['ano'] >= ano_inicio1) & (df_brent['ano'] <= ano_fim2)]
-    df_mmbpd_filtrado = df_mmbpd[(df_mmbpd['ano'] >= ano_inicio1) & (df_mmbpd['ano'] <= ano_fim2)]
-
-    # Cria a figura
-    fig = go.Figure()
-
-    # Linha do preço do Brent (azul escuro)
-    fig.add_trace(go.Scatter(
-        x=df_brent_filtrado.index,
-        y=df_brent_filtrado['valor'],
-        mode='lines',
-        name='Preço Brent (USD)',
-        line=dict(color='#0d3b66', width=3),
-        yaxis='y2'
-    ))
-
-    # Barras da produção de petróleo (azul claro)
-    fig.add_trace(go.Scatter(
-        x=df_mmbpd_filtrado.index,
-        y=df_mmbpd_filtrado['valor_mensal'],
-        mode='lines',
-        name='Produção de Petróleo (MMBPD)',
-        marker_color='#71C5E8',
-        yaxis='y1'
-    ))
-
-    # Layout com dois eixos Y
-    fig.update_layout(
-        title=f'Produção de Petróleo (MMBPD) vs Preço Brent (USD) — {ano_inicio1} a {ano_fim2}',
-        xaxis_title='Ano',
-        yaxis=dict(title='Produção (MMBPD)', side='left', showgrid=False),
-        yaxis2=dict(title='Preço Brent (USD)', overlaying='y', side='right'),
-        template='plotly_dark',
-        legend=dict(
-    orientation='h',
-    yanchor='top',
-    y=-0.2,
-    xanchor='center',
-    x=0.5
-)
-    )
-
-    # Exibe no Streamlit
-    st.plotly_chart(fig, use_container_width=True)
     
  periodo5 = (
     "1987 - 2000",
